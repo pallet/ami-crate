@@ -50,6 +50,8 @@ argument specifying configuration choices as described below:
               :s3-bucket <your-s3-bucket>
               :s3-path <your-s3-path>
               :user-id <your-aws-user-id>
+              ;; the following are picked up from the Pallet AWS provider
+              ;; if not specified
               :private-key-source {:local-file <your-aws-private-key-file>}
               :certificate-source {:local-file <your-aws-cert-file>}})])
 ```
