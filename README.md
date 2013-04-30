@@ -30,15 +30,16 @@ Crate to build an AMI from a running image.
 </tbody>
 </table>
 
-## Usage
+## Introduction and Usage
 
-Builds an S3 backed AMI from a running instance.  Installs ruby and ami-tools,
-and builds an image that excludes these.
+With this crate you build an S3-backed AMI from a group-spec with a
+running instance. When a group extends `ami/server-spec`, then the
+group has the capabilities of installing ruby and ami-tools and then
+and build an AMI from the node that excludes these tools.
 
-The `server-spec` function provides a convenient pallet server spec for
-ami-crate.  It takes a single map as an argument, specifying configuration
-choices, as described below for the `settings` function.  You can use this
-in your own group or server specs in the :extends clause.
+The `ami/server-spec` function provides a convenient pallet
+server-spec for ami-crate, and this function takes a single map as an
+argument specifying configuration choices as described below:
 
 ```clj
 (require '[pallet.crate.ami :as ami])
@@ -52,6 +53,41 @@ in your own group or server specs in the :extends clause.
               :private-key-source {:local-file <your-aws-private-key-file>}
               :certificate-source {:local-file <your-aws-cert-file>}})])
 ```
+
+### Example: create an AMI from an existing group
+
+```clj
+;; Let's assume we have a group 'my-group' with the configuration we
+;; want in an AMI
+(def my-group (group-spec "my-group"...)
+
+;; First we extend this group with the the ami server-spec
+(def ami-maker-group
+  (group-spec "ami-maker"
+              :extends [(ami/server-spec
+                         {:image-name "pallet-example-ami"
+                          :image-description "A Pallet Test AMI"
+                          :s3-bucket "<s3-bucket-path>"
+                          :s3-path "<s3-aws-user-id>"
+                          ...})]))
+                          
+;; Then we instantiate one node from this group and check that it
+;; fully and correctly built
+(converge {ami-maker-group 1} 
+          :phase [:install :configure] 
+          :compute aws)
+
+
+;; Finally, create an AMI from the currently running instance
+(lift [ami-maker-group] 
+      :phase [:ami-bundle :ami-upload :ami-register]
+      :compute aws)
+      
+;; the AMI should be usable now
+
+```
+
+## Documentation
 
 While `server-spec` provides an all-in-one function, you can use the individual
 plan functions as you see fit.  The `server-spec` provides `:install`,
