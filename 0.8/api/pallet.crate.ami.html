@@ -1,0 +1,170 @@
+<html lang="en">
+  <head>
+    <title>pallet.crate.ami documentation</title>
+    <link href="css/default.css" type="text/css" rel="stylesheet" />
+    <link href="css/codox-md.css" type="text/css" rel="stylesheet" />
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+    <script type="text/javascript" src="js/page_effects.js"></script>
+  </head>
+  <body>
+    <header>
+    <div data-scrollspy="scrollspy" class="topbar">
+      <div class="topbar-inner">
+        <div class="container">
+          <a href="/" class="brand">Pallet</a>
+          <ul class="nav">
+            <li class=""><a href="/doc">Documentation</a></li>
+            <li class=""><a href="/news">News</a></li>
+            <li class=""><a href="/blog">Blog</a></li>
+            <li class=""><a href="https://github.com/pallet/pallet">Code</a></li>
+            <li class=""><a href="/services">Services</a></li>
+            <li class=""><a href="/support">Support</a></li>
+            <li class=""><a href="/contact">Contact</a></li>
+          </ul>
+          <form action="http://www.google.com/search" method="get" class="pull-right">
+            <input placeholder="Search" value="" maxlength="255" name="q" type="text" />
+            <input value="palletops.com" type="hidden" name="sitesearch" />
+          </form>
+        </div>
+      </div>
+    </div>
+      <div id="header">
+        <h1><a href="http://palletops.com"><span class="project-title">Ami-crate 0.8.0-SNAPSHOT API documentation</span></a></h1>
+      </div>
+    </header>
+    <navigation>
+      <div id="namespaces" class="sidebar">
+        <h3>Namespaces</h3>
+        <ul class="ns-links">
+          <li class="ns-list"><a class="ns-link ns-name" href="pallet.crate.ami.html">pallet.crate.ami</a></li>
+        </ul>
+      </div>
+      <div id="vars" class="sidebar">
+        <h3>Public Vars</h3>
+        <ul class="ns-var-links">
+          <li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.crate.ami.html#var-ami-bundle">ami-bundle</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.crate.ami.html#var-ami-crate-config-changed-flag">ami-crate-config-changed-flag</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.crate.ami.html#var-ami-register">ami-register</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.crate.ami.html#var-ami-upload">ami-upload</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.crate.ami.html#var-configure">configure</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.crate.ami.html#var-credential-file">credential-file</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.crate.ami.html#var-default-settings">default-settings</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.crate.ami.html#var-finalise-settings">finalise-settings</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.crate.ami.html#var-install">install</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.crate.ami.html#var-server-spec">server-spec</a></li><li class="ns-var-list"><a class="ns-var-link ns-var-name" href="pallet.crate.ami.html#var-settings">settings</a></li>
+        </ul>
+      </div>
+    </navigation>
+    <article>
+      <div id="content" class="namespace-docs">
+        <h2 class="namespace-title">pallet.crate.ami documentation</h2>
+        <div class="doc"><p>A <a href="https://palletops.com/">pallet</a> crate to install and configure ami-crate.</p>
+
+<p>By default, installs ruby using rbenv in the ami-tools install-dir.  We use this
+instead of the native package so we can exclude the ruby from the ami easily.</p>
+</div>
+        <div class="ns-vars">
+          <div class="public">
+            <h3><a id="var-ami-bundle" class="source var-name" href="https://github.com/pallet/ami-crate/blob/develop/src/pallet/crate/ami.clj#L228">ami-bundle</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[{:keys [instance-id], :as options}]</div>
+            
+            
+            <div class="doc"><p>Build an AMI</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-ami-crate-config-changed-flag" class="source var-name" href="https://github.com/pallet/ami-crate/blob/develop/src/pallet/crate/ami.clj#L204">ami-crate-config-changed-flag</a></h3>
+            <h4 class="var-type var" id="var-type">var</h4>
+            
+            
+            
+            <div class="doc"><p>Flag for recognising changes to configuration</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-ami-register" class="source var-name" href="https://github.com/pallet/ami-crate/blob/develop/src/pallet/crate/ami.clj#L270">ami-register</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[{:keys [instance-id], :as options}]</div>
+            
+            
+            <div class="doc"><p>Register an AMI</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-ami-upload" class="source var-name" href="https://github.com/pallet/ami-crate/blob/develop/src/pallet/crate/ami.clj#L249">ami-upload</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[{:keys [instance-id], :as options}]</div>
+            
+            
+            <div class="doc"><p>Upload and register an AMI</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-configure" class="source var-name" href="https://github.com/pallet/ami-crate/blob/develop/src/pallet/crate/ami.clj#L215">configure</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[{:keys [instance-id], :as options}]</div>
+            
+            
+            <div class="doc"><p>Write all config files</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-credential-file" class="source var-name" href="https://github.com/pallet/ami-crate/blob/develop/src/pallet/crate/ami.clj#L207">credential-file</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[path file-source]</div>
+            
+            
+            <div class="doc"><p>Helper to write credential files</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-default-settings" class="source var-name" href="https://github.com/pallet/ami-crate/blob/develop/src/pallet/crate/ami.clj#L73">default-settings</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[]</div>
+            
+            
+            <div class="doc"><p>Provides default settings, that are merged with any user supplied settings.</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-finalise-settings" class="source var-name" href="https://github.com/pallet/ami-crate/blob/develop/src/pallet/crate/ami.clj#L105">finalise-settings</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[{:keys [credential-dir destination-dir image-name install-dir instance-id s3-bucket s3-path], :as settings}]</div>
+            
+            
+            <div class="doc"><p>Fill in any blanks for the settings</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-install" class="source var-name" href="https://github.com/pallet/ami-crate/blob/develop/src/pallet/crate/ami.clj#L187">install</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[{:keys [instance-id], :as options}]</div>
+            
+            
+            <div class="doc"><p>Install AMI tools</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-server-spec" class="source var-name" href="https://github.com/pallet/ami-crate/blob/develop/src/pallet/crate/ami.clj#L285">server-spec</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[settings &amp; {:keys [instance-id], :as options}]</div>
+            
+            
+            <div class="doc"><p>Returns a server-spec that installs and configures ami-crate.</p>
+</div>
+          </div><div class="public">
+            <h3><a id="var-settings" class="source var-name" href="https://github.com/pallet/ami-crate/blob/develop/src/pallet/crate/ami.clj#L136">settings</a></h3>
+            <h4 class="var-type fn" id="var-type">fn</h4>
+            <div class="usage">[{:keys [image-name s3-bucket s3-path instance-id], :as settings}]</div>
+            
+            
+            <div class="doc"><p>Settings for ami-crate.</p>
+
+<h2>Options</h2>
+
+<p><code>:image-name</code>
+: image name</p>
+
+<p><code>:install-ruby</code>
+: flag to install ruby (defaults to true).  Ruby must be present for the
+  ami-tools.</p>
+
+<p><code>:ruby-version</code>
+: version of ruby to install (defaults 1.9.3-p392).</p>
+
+<p><code>:s3-bucket</code>
+: s3 bucket to upload the bundle to</p>
+
+<p><code>:s3-path</code>
+: s3 path to upload the bundle to (within the bucket)</p>
+</div>
+          </div>
+        </div>
+      </div>
+    </article>
+  </body>
+
+</html>
