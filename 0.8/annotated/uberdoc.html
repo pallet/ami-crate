@@ -3029,12 +3029,10 @@ net.brehaut.ClojureTools = (function (SH) {
   };
 })(SyntaxHighlighter);
 </script><title>com.palletops/ami-crate -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">com.palletops/ami-crate</h1><h2 class="project-version">0.8.0-SNAPSHOT</h2><br /><p>Pallet crate to install, configure and use ami-crate</p>
-</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.4.0</td></tr><tr><td class="dep-name">com.palletops/pallet</td><td class="dotted"><hr /></td><td class="dep-version">0.8.0-beta.9</td></tr><tr><td class="dep-name">com.palletops/rbenv-crate</td><td class="dotted"><hr /></td><td class="dep-version">0.8.0-SNAPSHOT</td></tr><tr><td class="dep-name">amazonica</td><td class="dotted"><hr /></td><td class="dep-version">0.1.6</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#pallet.crate.ami">pallet.crate.ami</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#pallet.crate.ami" name="pallet.crate.ami"><h1 class="project-name">pallet.crate.ami</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>A <a href="https://palletops.com/">pallet</a> crate to install and configure ami-crate.</p>
+</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.4.0</td></tr><tr><td class="dep-name">com.palletops/pallet</td><td class="dotted"><hr /></td><td class="dep-version">0.8.0-beta.9</td></tr><tr><td class="dep-name">com.palletops/rbenv-crate</td><td class="dotted"><hr /></td><td class="dep-version">0.8.0-SNAPSHOT</td></tr><tr><td class="dep-name">amazonica</td><td class="dotted"><hr /></td><td class="dep-version">0.1.6</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#pallet.crate.ami">pallet.crate.ami</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#pallet.crate.ami" name="pallet.crate.ami"><h1 class="project-name">pallet.crate.ami</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>A <a href="https://palletops.com/">pallet</a> crate to create S3 backed AMI images.</p>
 
 <p>By default, installs ruby using rbenv in the ami-tools install-dir.  We use this
 instead of the native package so we can exclude the ruby from the ami easily.</p>
-
-<p>TODO edit this with links to the software being installed and configured</p>
 </td><td class="codes"><pre class="brush: clojure">(ns pallet.crate.ami
   (:require
    [amazonica.core]
@@ -3045,8 +3043,10 @@ instead of the native package so we can exclude the ruby from the ami easily.</p
    [clojure.string :as string]
    [clojure.tools.logging :refer [infof]]
    [pallet.action :refer [with-action-options]]
-   [pallet.actions :refer [as-action directory exec-checked-script packages
-                           remote-directory remote-file]
+   [pallet.actions
+    :refer [as-action directory exec-checked-script packages remote-directory
+            remote-file update-settings]
+    :rename {update-settings update-settings-action}
     :as actions]
    [pallet.api :refer [plan-fn] :as api]
    [pallet.compute :refer [service-properties]]
@@ -3072,13 +3072,12 @@ instead of the native package so we can exclude the ruby from the ami easily.</p
    [:install-strategy] keyword?
    [:install-dir] string?
    [:destination-dir] string?
-   [:install-sources] (sequence-of (map-schema
-                                    :loose
-                                    [(optional-path [:local-file]) string?
-                                     (optional-path [:url]) string?]))
+   [:install-source] (map-schema
+                      :loose
+                      [(optional-path [:local-file]) string?
+                       (optional-path [:url]) string?])
    [:credential-dir] string?
    [:ami-tools-url] string?
-   [:api-tools-url] string?
    [:private-key-path] string?
    [:certificate-path] string?
    [:private-key-source] (map-schema
@@ -3093,8 +3092,7 @@ instead of the native package so we can exclude the ruby from the ami easily.</p
    [:s3-manifest-path] string?
    [:manifest-path] string?
    [:ruby-version] string?
-   (optional-path [:install-ruby]) any-value
-   (optional-path [:exclude-ruby]) any-value])</pre></td></tr><tr><td class="docs">
+   (optional-path [:install-ruby]) any-value])</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defmacro check-ami-settings
   [m]
   (check-spec m `ami-settings-schema &amp;form))</pre></td></tr><tr><td class="docs"><p>Provides default settings, that are merged with any user supplied settings.</p>
@@ -3102,20 +3100,20 @@ instead of the native package so we can exclude the ruby from the ami easily.</p
 <h1>Settings</h1>
 </td><td class="codes"><pre class="brush: clojure">(defn default-settings
   []
-  ;; TODO add configuration options here
-  {:user (:username (admin-user))
-   :private-key-path nil                ; private key
-   :certificate-path nil                ; certificate source
-   :user-id nil                         ; aws user id
-   :ami-tools-url &quot;http://s3.amazonaws.com/ec2-downloads/ec2-ami-tools.zip&quot;
-   :api-tools-url &quot;http://s3.amazonaws.com/ec2-downloads/ec2-api-tools.zip&quot;
-   :install-ruby true
-   :ruby-version &quot;1.9.3-p392&quot;
-   :exclude-ruby true
-   :install-dir &quot;/opt/ami-tools&quot;
-   :destination-dir &quot;/tmp&quot;
-   :credential-dir &quot;/opt/ami-tools/credentials&quot;
-   :arch &quot;x86_64&quot;})</pre></td></tr><tr><td class="docs">
+  (let [{:keys [identity credential]} (service-properties (compute-service))]
+    {:user (:username (admin-user))
+     :access-key identity
+     :secret-key credential
+     :private-key-path nil                ; private key
+     :certificate-path nil                ; certificate source
+     :user-id nil                         ; aws user id
+     :ami-tools-url &quot;http://s3.amazonaws.com/ec2-downloads/ec2-ami-tools.zip&quot;
+     :install-ruby true
+     :ruby-version &quot;1.9.3-p392&quot;
+     :install-dir &quot;/opt/ami-tools&quot;
+     :destination-dir &quot;/tmp&quot;
+     :credential-dir &quot;/opt/ami-tools/credentials&quot;
+     :arch &quot;x86_64&quot;}))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(def rbenv-options {:instance-id ::ami})</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defmulti-version-plan settings-map [version settings])</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defmethod-version-plan
@@ -3124,8 +3122,7 @@ instead of the native package so we can exclude the ruby from the ami easily.</p
   (cond
    (:install-strategy settings) settings
    :else (merge {:install-strategy ::unzip
-                 :install-sources [{:url (:ami-tools-url settings)}
-                                   {:url (:api-tools-url settings)}]}
+                 :install-source {:url (:ami-tools-url settings)}}
                 settings)))</pre></td></tr><tr><td class="docs"><p>Fill in any blanks for the settings</p>
 </td><td class="codes"><pre class="brush: clojure">(defn finalise-settings
   [{:keys [credential-dir destination-dir image-name install-dir instance-id
@@ -3162,6 +3159,9 @@ instead of the native package so we can exclude the ruby from the ami easily.</p
 <p><code>:image-name</code>
 : image name</p>
 
+<p><code>:image-description</code>
+: image description</p>
+
 <p><code>:install-ruby</code>
 : flag to install ruby (defaults to true).  Ruby must be present for the
   ami-tools.</p>
@@ -3173,7 +3173,35 @@ instead of the native package so we can exclude the ruby from the ami easily.</p
 : s3 bucket to upload the bundle to</p>
 
 <p><code>:s3-path</code>
-: s3 path to upload the bundle to (within the bucket)</p>
+: s3 path to upload the bundle to (relative to the bucket)</p>
+
+<p><code>:user-id</code>
+: your AWS user ID (without any dashes)</p>
+
+<p><code>:private-key-source</code>
+: a remote-file source map for the AWS private key file</p>
+
+<p><code>:certificate-source</code>
+: a remote-file source map for the AWS cert file</p>
+
+<p><code>:access-key</code>
+: AWS access key (defaults to the access key for the compute service)</p>
+
+<p><code>:secret-key</code>
+: AWS secret key (defaults to the secret key for the compute service)</p>
+
+<p><code>:destination-dir</code>
+: directory on the node in which the image bundle should be built (default /tmp)</p>
+
+<p><code>:install-dir</code>
+: directory on the node for the ami-tools (default /opt/ami-tools)</p>
+
+<p><code>:credential-dir</code>
+: directory on the node for the credential files (default
+  /opt/ami-tools/credentials)</p>
+
+<p><code>:arch</code>
+: the AMI architecture (default x86_64)</p>
 </td><td class="codes"><pre class="brush: clojure">(defplan settings
   [{:keys [image-name s3-bucket s3-path instance-id] :as settings}]
   (let [settings (merge (default-settings) settings)
@@ -3186,23 +3214,20 @@ instead of the native package so we can exclude the ruby from the ami easily.</p
     (assoc-settings :ami-crate settings {:instance-id instance-id})))</pre></td></tr><tr><td class="docs"><h1>Install</h1>
 </td><td class="codes"><pre class="brush: clojure">(defmethod-plan crate-install/install ::unzip
   [facility instance-id]
-  (let [{:keys [install-dir install-sources user] :as settings}
+  (let [{:keys [install-dir install-source user] :as settings}
         (get-settings facility {:instance-id instance-id})]
     (check-ami-settings settings)
     (packages :apt [&quot;unzip&quot;])
-    (doseq [install-source install-sources]
-      (apply-map
-       remote-directory install-dir
-       :unpack :unzip
-       :owner user
-       install-source))
+    (apply-map
+     remote-directory install-dir
+     :unpack :unzip
+     :owner user
+     install-source)
     (with-action-options {:script-dir install-dir}
       (exec-checked-script
        &quot;remove top level folder&quot;
        (if (not (directory? &quot;ec2-ami-tools&quot;))
-         (mv &quot;ec2-ami-tools*&quot; &quot;ec2-ami-tools&quot; :force true))
-       (if (not (directory? &quot;ec2-api-tools&quot;))
-         (mv &quot;ec2-api-tools*&quot; &quot;ec2-api-tools&quot; :force true))))))</pre></td></tr><tr><td class="docs"><p>Install AMI tools</p>
+         (mv &quot;ec2-ami-tools*&quot; &quot;ec2-ami-tools&quot; :force true))))))</pre></td></tr><tr><td class="docs"><p>Install AMI tools</p>
 </td><td class="codes"><pre class="brush: clojure">(defplan install
   [{:keys [instance-id] :as options}]
   (let [{:keys [credential-dir install-dir install-ruby ruby-version user]
@@ -3237,7 +3262,7 @@ instead of the native package so we can exclude the ruby from the ami easily.</p
     (check-ami-settings settings)
     (with-action-options {:sudo-user user}
       (credential-file certificate-path certificate-source)
-      (credential-file private-key-path private-key-source))))</pre></td></tr><tr><td class="docs"><p>Build an AMI</p>
+      (credential-file private-key-path private-key-source))))</pre></td></tr><tr><td class="docs"><p>Build an AMI bundle.</p>
 </td><td class="codes"><pre class="brush: clojure">(defplan ami-bundle
   [{:keys [instance-id] :as options}]
   (let [{:keys [install-dir install-ruby] :as settings}
@@ -3256,7 +3281,7 @@ instead of the native package so we can exclude the ruby from the ami easily.</p
         -c ~(:certificate-path settings)
         -u ~(:user-id settings)
         -e ~(string/join &quot;,&quot; (:exclusions settings))
-        -r ~(:arch settings))))))</pre></td></tr><tr><td class="docs"><p>Upload and register an AMI</p>
+        -r ~(:arch settings))))))</pre></td></tr><tr><td class="docs"><p>Upload a AMI bundle to S3.</p>
 </td><td class="codes"><pre class="brush: clojure">(defplan ami-upload
   [{:keys [instance-id] :as options}]
   (let [{:keys [install-dir install-ruby] :as settings}
@@ -3275,19 +3300,22 @@ instead of the native package so we can exclude the ruby from the ami easily.</p
                  (if-let [p (:s3-path settings)] (str &quot;/&quot; p) &quot;&quot;))
         -m ~(:manifest-path settings)
         -a ~(:access-key settings)
-        -s ~(:secret-key settings))))))</pre></td></tr><tr><td class="docs"><p>Register an AMI</p>
+        -s ~(:secret-key settings))))))</pre></td></tr><tr><td class="docs"><p>Register an S3 backed AMI.</p>
 </td><td class="codes"><pre class="brush: clojure">(defplan ami-register
   [{:keys [instance-id] :as options}]
   (let [{:keys [install-dir install-ruby] :as settings}
         (get-settings :ami-crate options)]
     (check-ami-settings settings)
-    (as-action
-     (let [response (ec2/register-image
-                     (select-keys settings [:access-key :secret-key])
-                     :name (:image-name settings)
-                     :image-location (:s3-manifest-path settings)
-                     :description (:image-description settings))]
-       (infof &quot;ami-register image-id %s&quot; (pr-str (:image-id response)))))))</pre></td></tr><tr><td class="docs"><p>Returns a server-spec that installs and configures ami-crate.</p>
+    (let [rv (as-action
+              (let [response (ec2/register-image
+                              (select-keys settings [:access-key :secret-key])
+                              :name (:image-name settings)
+                              :image-location (:s3-manifest-path settings)
+                              :description (:image-description settings))]
+                (infof &quot;ami-register image-id %s&quot;
+                       (pr-str (:image-id response)))
+                response))]
+      (update-settings-action :ami-crate merge rv))))</pre></td></tr><tr><td class="docs"><p>Returns a server-spec that installs and configures ami-crate.</p>
 
 <h1>Server spec</h1>
 </td><td class="codes"><pre class="brush: clojure">(defn server-spec
