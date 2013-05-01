@@ -17,9 +17,11 @@ instead of the native package so we can exclude the ruby from the ami easily."
             remote-file update-settings]
     :rename {update-settings update-settings-action}
     :as actions]
-   [pallet.api :refer [plan-fn] :as api]
+   [pallet.algo.fsmop :refer [failed?]]
+   [pallet.api :refer [converge group-spec lift plan-fn] :as api]
    [pallet.compute :refer [service-properties]]
    [pallet.contracts :refer [any-value check-spec]]
+   [pallet.core.api :refer [phase-errors]]
    [pallet.crate :refer [admin-user assoc-settings compute-service
                          defmethod-plan defplan get-settings]]
    [pallet.crate.rbenv :as rbenv]
@@ -30,6 +32,7 @@ instead of the native package so we can exclude the ruby from the ami easily."
    [pallet.version-dispatch :refer [defmethod-version-plan
                                     defmulti-version-plan]]))
 
+;;; # Settings
 (def-map-schema ami-settings-schema
   [[:image-name] string?
    [:image-description] string?
@@ -68,7 +71,6 @@ instead of the native package so we can exclude the ruby from the ami easily."
   [m]
   (check-spec m `ami-settings-schema &form))
 
-;;; # Settings
 (defn default-settings
   "Provides default settings, that are merged with any user supplied settings."
   []
@@ -308,7 +310,7 @@ instead of the native package so we can exclude the ruby from the ami easily."
                 (infof "ami-register image-id %s"
                        (pr-str (:image-id response)))
                 response))]
-      (update-settings-action :ami-crate merge rv))))
+      (update-settings-action :ami-crate options merge rv))))
 
 (defplan cleanup
   "Remove ruby and ami-tools and bundle files."
@@ -343,3 +345,59 @@ instead of the native package so we can exclude the ruby from the ami easily."
                     (ami-register options))
     :cleanup (plan-fn
                (cleanup options))}))
+
+;;; # Group to AMI functions
+
+(defn group-with-ami-spec
+  "Returns a group spec with AMI phases, that matches an existing `group-name`.
+  The `settings` are applied to the AMI server-spec."
+  [group-name settings]
+  (group-spec group-name :extends [(server-spec settings)]))
+
+(defn make-ami-from-group-node
+  "Function to build an AMI from a running node of the `group-name` group.  The
+  `settings` are applied to the AMI server-spec.  One of the existing nodes is
+  used to build the AMI."
+  [group-name settings]
+  (lift (group-with-ami-spec group-name settings)
+        :phase [:install :configure :ami-bundle :ami-upload :ami-register
+                :cleanup]
+        :partition-f first))
+
+(defn ami-group-spec
+  "Returns a group spec that extends the passed `group` spec with AMI phases.
+  The `settings` are applied to the AMI server-spec."
+  [group settings]
+  (group-spec (str "ami-" (name (:group-name group)))
+    :extends [group (server-spec settings)]))
+
+(defn make-ami
+  "Build an ami for the given group-spec.  A new node will be created to build
+  the AMI, and will use the passed `group` spec's :group-name, prefixed with
+  \"ami-\".  The `settings` are applied to the AMI server-spec.  The phases
+  may be passed explicitly, but default to
+
+      [:install :configure :ami-bundle :ami-upload :ami-register]
+
+  Returns the ami id that was created."
+  [group settings & {:keys [compute phase] :as options}]
+  (let [g (ami-group-spec group settings)
+        op (apply-map
+            converge
+            {g 1}
+            :async true
+            :phase (or phase
+                       [:install :configure
+                        :ami-bundle :ami-upload :ami-register])
+            (dissoc options :phase))]
+    @op
+    (let [ami (->> (:results @op)
+                   (filter #(= :ami-register (:phase %)))
+                   first
+                   :result
+                   first
+                   :image-id)]
+      (if (failed? op)
+        (println (phase-errors op))
+        (do (apply-map converge {g 0} (dissoc options :phase))
+            ami)))))
