@@ -25,7 +25,7 @@ instead of the native package so we can exclude the ruby from the ami easily."
    [pallet.crate.rbenv :as rbenv]
    [pallet.crate-install :as crate-install]
    [pallet.stevedore :refer [fragment]]
-   [pallet.script.lib :refer [config-root file mv state-root]]
+   [pallet.script.lib :refer [config-root file mv rm state-root]]
    [pallet.utils :refer [apply-map]]
    [pallet.version-dispatch :refer [defmethod-version-plan
                                     defmulti-version-plan]]))
@@ -310,6 +310,19 @@ instead of the native package so we can exclude the ruby from the ami easily."
                 response))]
       (update-settings-action :ami-crate merge rv))))
 
+(defplan cleanup
+  "Remove ruby and ami-tools and bundle files."
+  [{:keys [instance-id] :as options}]
+  (let [{:keys [install-dir destination-dir credential-dir] :as settings}
+        (get-settings :ami-crate options)]
+    (check-ami-settings settings)
+    (exec-checked-script
+     "Remove bundle image files"
+     (rm ~credential-dir :recursive true :force true)
+     (rm ~install-dir :recursive true :force true)
+     (rm (file ~destination-dir "image.part.*"))
+     (rm (file ~destination-dir "image.manifest.xml")))))
+
 ;;; # Server spec
 (defn server-spec
   "Returns a server-spec that installs and configures ami-crate."
@@ -327,4 +340,6 @@ instead of the native package so we can exclude the ruby from the ami easily."
     :ami-upload (plan-fn
                   (ami-upload options))
     :ami-register (plan-fn
-                    (ami-register options))}))
+                    (ami-register options))
+    :cleanup (plan-fn
+               (cleanup options))}))

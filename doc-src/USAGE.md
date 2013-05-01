@@ -23,7 +23,8 @@ in your own group or server specs in the :extends clause.
 
 While `server-spec` provides an all-in-one function, you can use the individual
 plan functions as you see fit.  The `server-spec` provides `:install`,
-`:configure`, `:ami-bundle`, `:ami-upload`, and `:ami-register` phases.
+`:configure`, `:ami-bundle`, `:ami-upload`, `:ami-register` and `cleanup`
+phases.
 
 The `settings` function provides a plan function that should be called in the
 `:settings` phase.  The function puts the configuration options into the pallet
@@ -40,6 +41,8 @@ The `ami-upload` function uploads an image bundle to S3.
 
 The `ami-register` function registers an AMI from an image bundle stored in S3.
 
+The `cleanup` function removes installed ami-tools, ruby and generated image
+bundle files.
 
 ## Testing
 
