@@ -3,6 +3,13 @@
 Builds an S3 backed AMI from a running instance.  Installs ruby and ami-tools,
 and builds an image that excludes these.
 
+The `make-ami` function takes a group-spec and a map of options to pass to the
+ami `settings` function, and builds an AMI using a new node.
+
+The `make-ami-from-group-node` function takes a group name and a map of options
+to pass to the ami `settings` function, and builds an AMI using an existing node
+running for the specified group name.
+
 The `server-spec` function provides a convenient pallet server spec for
 ami-crate.  It takes a single map as an argument, specifying configuration
 choices, as described below for the `settings` function.  You can use this

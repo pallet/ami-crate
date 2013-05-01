@@ -343,3 +343,45 @@ instead of the native package so we can exclude the ruby from the ami easily."
                     (ami-register options))
     :cleanup (plan-fn
                (cleanup options))}))
+
+;;; # Group to AMI functions
+
+(defn group-with-ami-spec
+  "Returns a group spec with AMI phases, that matches an existing `group-name`.
+  The `settings` are applied to the AMI server-spec."
+  [group-name settings]
+  (group-spec group-name :extends [(server-spec settings)]))
+
+(defn make-ami-from-group-node
+  "Function to build an AMI from a running node of the `group-name` group.  The
+  `settings` are applied to the AMI server-spec.  One of the existing nodes is
+  used to build the AMI."
+  [group-name settings]
+  (lift (group-with-ami-spec group-name settings)
+        :phase [:install :configure :ami-bundle :ami-upload :ami-register
+                :cleanup]
+        :partition-f first))
+
+(defn ami-group-spec
+  "Returns a group spec that extends the passed `group` spec with AMI phases.
+  The `settings` are applied to the AMI server-spec."
+  [group settings]
+  (group-spec (str "ami-" (name (:group-name group)))
+    :extends [group (server-spec settings)]))
+
+(defn make-ami
+  "Build an ami for the given group-spec.  A new node will be created to build
+  the AMI, and will use the passed `group` spec's :group-name, prefixed with
+  \"ami-\".  The `settings` are applied to the AMI server-spec.  The phases
+  may be passed explicitly, but default to
+
+      [:install :configure :ami-bundle :ami-upload :ami-register]"
+  [group settings & {:keys [compute phase] :as options}]
+  (let [g (ami-group-spec group settings)]
+    (apply-map
+     converge
+     {g 1}
+     :phase (or phase
+                [:install :configure :ami-bundle :ami-upload :ami-register])
+     (dissoc options :phase))
+    (converge {g 0} (dissoc options :phase))))
