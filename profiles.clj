@@ -2,7 +2,9 @@
  {:dependencies [[com.palletops/pallet "0.8.0-beta.9" :classifier "tests"]
                  [com.palletops/crates "0.1.1-SNAPSHOT"]
                  [com.palletops/git-crate "0.8.0-SNAPSHOT"]
-                 [ch.qos.logback/logback-classic "1.0.9"]]
+                 [ch.qos.logback/logback-classic "1.0.9"]
+                 [org.slf4j/jcl-over-slf4j "1.7.3"]]
+  :exclusions [commons-logging]
   :plugins [[lein-set-version "0.3.0"]
             [lein-resource "0.3.2"]]
   :aliases {"live-test-up"
