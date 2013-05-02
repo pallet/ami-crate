@@ -53,5 +53,5 @@ bundle files.
 
 ## Testing
 
-The crate live test is based on environment variables to provide credentials,
-etc.
+The crate live test is based on loading a `test_credentials.clj` file to provide
+a credential map that is merged into the ami settings.

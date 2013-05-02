@@ -2,6 +2,7 @@
   (:require
    [amazonica.core]
    [amazonica.aws.ec2 :as ec2]
+   [clojure.java.io :refer [file resource]]
    [clojure.test :refer :all]
    [pallet.actions :refer [exec-script*]]
    [pallet.api :refer [group-spec plan-fn]]
@@ -10,20 +11,21 @@
    [pallet.crate.git :as git]
    [pallet.script-test :refer [is-true testing-script]]))
 
+(defn test-credentials
+  []
+  (load-file (.getPath (file (resource "test_credentials.clj")))))
 
 (def test-spec
-  (let [env (System/getenv)]
+  (let [env (System/getenv)
+        creds (test-credentials)]
     (group-spec "ami"
       :extends
       [(git/server-spec {})
        (ami/server-spec
-        {:image-name "pallet-test-ami"
-         :image-description "Pallet test AMI"
-         :s3-bucket (get env "S3_BUCKET")
-         :s3-path (get env "S3_PATH")
-         :user-id (get env "AWS_USER_ID")
-         :private-key-source {:local-file (get env "AWS_PRIVATE_KEY_FILE")}
-         :certificate-source {:local-file (get env "AWS_CERT_FILE")}})]
+        (merge
+         {:image-name "pallet-test-ami"
+          :image-description "Pallet test AMI"}
+         creds))]
       :phases {:test (plan-fn
                        (let [{:keys [image-id] :as settings}
                              (get-settings :ami-crate {})]

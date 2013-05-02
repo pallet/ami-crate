@@ -80,11 +80,13 @@ The `ami-upload` function uploads an image bundle to S3.
 
 The `ami-register` function registers an AMI from an image bundle stored in S3.
 
+The `cleanup` function removes installed ami-tools, ruby and generated image
+bundle files.
 
 ## Testing
 
-The crate live test is based on environment variables to provide credentials,
-etc.
+The crate live test is based on loading a `test_credentials.clj` file to provide
+a credential map that is merged into the ami settings.
 
 ## Support
 

@@ -4,6 +4,7 @@
 /checkouts
 /logs
 /doc
+test_credentials.clj
 doc-src/VERSIONS.md
 doc-src/INTRO.md
 pom.xml
