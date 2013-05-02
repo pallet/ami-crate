@@ -7,7 +7,7 @@
 
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [com.palletops/pallet "0.8.0-beta.9"]
-                 [com.palletops/rbenv-crate "0.8.0-SNAPSHOT"]
+                 [com.palletops/rbenv-crate "0.8.0-alpha.1"]
                  [amazonica "0.1.6"]]
   :repositories {"sonatype"
                  {:url "https://oss.sonatype.org/content/repositories/releases/"
