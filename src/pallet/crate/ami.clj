@@ -223,7 +223,8 @@ instead of the native package so we can exclude the ruby from the ami easily."
     (with-action-options {:sudo-user user}
       (directory credential-dir))
     (when install-ruby
-      (rbenv/install rbenv-options)
+      (rbenv/install (assoc rbenv-options
+                       :env {"CONFIGURE_OPTS" "--disable-install-rdoc"}))
       (apply-map rbenv/install-ruby ruby-version rbenv-options)
       (with-action-options {:script-dir install-dir}
         (apply-map rbenv/local ruby-version rbenv-options)))))
