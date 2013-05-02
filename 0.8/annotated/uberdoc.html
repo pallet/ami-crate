@@ -3028,8 +3028,8 @@ net.brehaut.ClojureTools = (function (SH) {
     build_tree: build_tree
   };
 })(SyntaxHighlighter);
-</script><title>com.palletops/ami-crate -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">com.palletops/ami-crate</h1><h2 class="project-version">0.8.0-SNAPSHOT</h2><br /><p>Pallet crate to install, configure and use ami-crate</p>
-</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.4.0</td></tr><tr><td class="dep-name">com.palletops/pallet</td><td class="dotted"><hr /></td><td class="dep-version">0.8.0-beta.9</td></tr><tr><td class="dep-name">com.palletops/rbenv-crate</td><td class="dotted"><hr /></td><td class="dep-version">0.8.0-SNAPSHOT</td></tr><tr><td class="dep-name">amazonica</td><td class="dotted"><hr /></td><td class="dep-version">0.1.6</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#pallet.crate.ami">pallet.crate.ami</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#pallet.crate.ami" name="pallet.crate.ami"><h1 class="project-name">pallet.crate.ami</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>A <a href="https://palletops.com/">pallet</a> crate to create S3 backed AMI images.</p>
+</script><title>com.palletops/ami-crate -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">com.palletops/ami-crate</h1><h2 class="project-version">0.8.0-alpha.1</h2><br /><p>Pallet crate to install, configure and use ami-crate</p>
+</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.4.0</td></tr><tr><td class="dep-name">com.palletops/pallet</td><td class="dotted"><hr /></td><td class="dep-version">0.8.0-beta.9</td></tr><tr><td class="dep-name">com.palletops/rbenv-crate</td><td class="dotted"><hr /></td><td class="dep-version">0.8.0-alpha.1</td></tr><tr><td class="dep-name">amazonica</td><td class="dotted"><hr /></td><td class="dep-version">0.1.6</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#pallet.crate.ami">pallet.crate.ami</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#pallet.crate.ami" name="pallet.crate.ami"><h1 class="project-name">pallet.crate.ami</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>A <a href="https://palletops.com/">pallet</a> crate to create S3 backed AMI images.</p>
 
 <p>By default, installs ruby using rbenv in the ami-tools install-dir.  We use this
 instead of the native package so we can exclude the ruby from the ami easily.</p>
@@ -3048,18 +3048,20 @@ instead of the native package so we can exclude the ruby from the ami easily.</p
             remote-file update-settings]
     :rename {update-settings update-settings-action}
     :as actions]
-   [pallet.api :refer [plan-fn] :as api]
+   [pallet.algo.fsmop :refer [failed?]]
+   [pallet.api :refer [converge group-spec lift plan-fn] :as api]
    [pallet.compute :refer [service-properties]]
    [pallet.contracts :refer [any-value check-spec]]
+   [pallet.core.api :refer [phase-errors]]
    [pallet.crate :refer [admin-user assoc-settings compute-service
                          defmethod-plan defplan get-settings]]
    [pallet.crate.rbenv :as rbenv]
    [pallet.crate-install :as crate-install]
    [pallet.stevedore :refer [fragment]]
-   [pallet.script.lib :refer [config-root file mv state-root]]
+   [pallet.script.lib :refer [config-root file mv rm state-root]]
    [pallet.utils :refer [apply-map]]
    [pallet.version-dispatch :refer [defmethod-version-plan
-                                    defmulti-version-plan]]))</pre></td></tr><tr><td class="docs">
+                                    defmulti-version-plan]]))</pre></td></tr><tr><td class="docs"><h1>Settings</h1>
 </td><td class="codes"><pre class="brush: clojure">(def-map-schema ami-settings-schema
   [[:image-name] string?
    [:image-description] string?
@@ -3096,8 +3098,6 @@ instead of the native package so we can exclude the ruby from the ami easily.</p
 </td><td class="codes"><pre class="brush: clojure">(defmacro check-ami-settings
   [m]
   (check-spec m `ami-settings-schema &amp;form))</pre></td></tr><tr><td class="docs"><p>Provides default settings, that are merged with any user supplied settings.</p>
-
-<h1>Settings</h1>
 </td><td class="codes"><pre class="brush: clojure">(defn default-settings
   []
   (let [{:keys [identity credential]} (service-properties (compute-service))]
@@ -3238,7 +3238,8 @@ instead of the native package so we can exclude the ruby from the ami easily.</p
     (with-action-options {:sudo-user user}
       (directory credential-dir))
     (when install-ruby
-      (rbenv/install rbenv-options)
+      (rbenv/install (assoc rbenv-options
+                       :env {&quot;CONFIGURE_OPTS&quot; &quot;--disable-install-rdoc&quot;}))
       (apply-map rbenv/install-ruby ruby-version rbenv-options)
       (with-action-options {:script-dir install-dir}
         (apply-map rbenv/local ruby-version rbenv-options)))))</pre></td></tr><tr><td class="docs"><p>Flag for recognising changes to configuration</p>
@@ -3315,7 +3316,18 @@ instead of the native package so we can exclude the ruby from the ami easily.</p
                 (infof &quot;ami-register image-id %s&quot;
                        (pr-str (:image-id response)))
                 response))]
-      (update-settings-action :ami-crate merge rv))))</pre></td></tr><tr><td class="docs"><p>Returns a server-spec that installs and configures ami-crate.</p>
+      (update-settings-action :ami-crate options merge rv))))</pre></td></tr><tr><td class="docs"><p>Remove ruby and ami-tools and bundle files.</p>
+</td><td class="codes"><pre class="brush: clojure">(defplan cleanup
+  [{:keys [instance-id] :as options}]
+  (let [{:keys [install-dir destination-dir credential-dir] :as settings}
+        (get-settings :ami-crate options)]
+    (check-ami-settings settings)
+    (exec-checked-script
+     &quot;Remove bundle image files&quot;
+     (rm ~credential-dir :recursive true :force true)
+     (rm ~install-dir :recursive true :force true)
+     (rm (file ~destination-dir &quot;image.part.*&quot;))
+     (rm (file ~destination-dir &quot;image.manifest.xml&quot;)))))</pre></td></tr><tr><td class="docs"><p>Returns a server-spec that installs and configures ami-crate.</p>
 
 <h1>Server spec</h1>
 </td><td class="codes"><pre class="brush: clojure">(defn server-spec
@@ -3333,5 +3345,55 @@ instead of the native package so we can exclude the ruby from the ami easily.</p
     :ami-upload (plan-fn
                   (ami-upload options))
     :ami-register (plan-fn
-                    (ami-register options))}))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/fogus/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+                    (ami-register options))
+    :cleanup (plan-fn
+               (cleanup options))}))</pre></td></tr><tr><td class="docs"><h1>Group to AMI functions</h1>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Returns a group spec with AMI phases, that matches an existing <code>group-name</code>.
+  The <code>settings</code> are applied to the AMI server-spec.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn group-with-ami-spec
+  [group-name settings]
+  (group-spec group-name :extends [(server-spec settings)]))</pre></td></tr><tr><td class="docs"><p>Function to build an AMI from a running node of the <code>group-name</code> group.  The
+  <code>settings</code> are applied to the AMI server-spec.  One of the existing nodes is
+  used to build the AMI.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn make-ami-from-group-node
+  [group-name settings]
+  (lift (group-with-ami-spec group-name settings)
+        :phase [:install :configure :ami-bundle :ami-upload :ami-register
+                :cleanup]
+        :partition-f first))</pre></td></tr><tr><td class="docs"><p>Returns a group spec that extends the passed <code>group</code> spec with AMI phases.
+  The <code>settings</code> are applied to the AMI server-spec.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn ami-group-spec
+  [group settings]
+  (group-spec (str &quot;ami-&quot; (name (:group-name group)))
+    :extends [group (server-spec settings)]))</pre></td></tr><tr><td class="docs"><p>Build an ami for the given group-spec.  A new node will be created to build
+  the AMI, and will use the passed <code>group</code> spec's :group-name, prefixed with
+  "ami-".  The <code>settings</code> are applied to the AMI server-spec.  The phases
+  may be passed explicitly, but default to</p>
+
+<pre><code>  [:install :configure :ami-bundle :ami-upload :ami-register]
+</code></pre>
+
+<p>  Returns the ami id that was created.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn make-ami
+  [group settings &amp; {:keys [compute phase] :as options}]
+  (let [g (ami-group-spec group settings)
+        op (apply-map
+            converge
+            {g 1}
+            :async true
+            :phase (or phase
+                       [:install :configure
+                        :ami-bundle :ami-upload :ami-register])
+            (dissoc options :phase))]
+    @op
+    (let [ami (-&gt;&gt; (:results @op)
+                   (filter #(= :ami-register (:phase %)))
+                   first
+                   :result
+                   first
+                   :image-id)]
+      (if (failed? op)
+        (println (phase-errors op))
+        (do (apply-map converge {g 0} (dissoc options :phase))
+            ami)))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/fogus/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
        SyntaxHighlighter.all()</script></body></html>
